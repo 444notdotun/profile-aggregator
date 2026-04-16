@@ -47,7 +47,7 @@ public class AgifyApi implements AgeApi {
         if(response.statusCode() == 200) {
             AgeApiResponse apiResponse= objectMapper.readValue(response.body(), AgeApiResponse.class);
             if (apiResponse.getAge()==null){
-                throw new GenderNullException("age is null");
+                throw new GenderNullException("gender is null or age is null");
             }
             return apiResponse;
         }else {

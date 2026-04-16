@@ -1,10 +1,7 @@
 package com.apiintegration.hngstage1profileaggregator.utils;
 
 import com.apiintegration.hngstage1profileaggregator.data.model.Profile;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.AgeApiResponse;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.GenderizeApiResponse;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.NationalityApiResponse;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.ProfileResponse;
+import com.apiintegration.hngstage1profileaggregator.dtos.response.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -32,5 +29,9 @@ public class Mapper {
         profileResponse.setId(profile.getId());
         profileResponse.setCreatedAt(profile.getCreatedAt());
         return profileResponse;
+    }
+
+    public static ServiceResponse<ProfileResponse> mapProfileResponseToServiceResponse(ProfileResponse profileResponse, boolean success) {
+        return new ServiceResponse<>(profileResponse,success);
     }
 }

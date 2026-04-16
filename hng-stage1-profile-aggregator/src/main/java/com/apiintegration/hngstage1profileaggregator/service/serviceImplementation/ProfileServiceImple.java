@@ -3,10 +3,8 @@ package com.apiintegration.hngstage1profileaggregator.service.serviceImplementat
 import com.apiintegration.hngstage1profileaggregator.data.model.Country;
 import com.apiintegration.hngstage1profileaggregator.data.model.Profile;
 import com.apiintegration.hngstage1profileaggregator.data.repository.ProfileRepository;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.AgeApiResponse;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.GenderizeApiResponse;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.NationalityApiResponse;
-import com.apiintegration.hngstage1profileaggregator.dtos.response.ProfileResponse;
+import com.apiintegration.hngstage1profileaggregator.dtos.response.*;
+import com.apiintegration.hngstage1profileaggregator.exception.ProfileExistException;
 import com.apiintegration.hngstage1profileaggregator.service.serviceinterface.AgeApi;
 import com.apiintegration.hngstage1profileaggregator.service.serviceinterface.ProfileService;
 import com.apiintegration.hngstage1profileaggregator.utils.Mapper;
@@ -14,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -30,8 +29,12 @@ public class ProfileServiceImple implements ProfileService {
 
 
     @Override
-    public ProfileResponse createProfile(String name) {
-
+    public ServiceResponse<ProfileResponse> createProfile(String name) {
+        Optional<Profile> profileOptional = profileRepository.findByName(name);
+       if(profileOptional.isPresent()){
+           ProfileResponse profileResponse= Mapper.mapProfileToProfileResponse(profileOptional.get());
+           return Mapper.mapProfileResponseToServiceResponse(profileResponse,true);
+       }
         CompletableFuture<AgeApiResponse> ageApiResponseCompletableFuture = CompletableFuture.supplyAsync(()->ageApi.getAge(name));
         CompletableFuture<GenderizeApiResponse> genderizeApiResponseCompletableFuture = CompletableFuture.supplyAsync(()->generalizeApi.getGender(name));
         CompletableFuture<NationalityApiResponse> nationalizeApiCompletableFuture = CompletableFuture.supplyAsync(()->nationalizeApi.getNationality(name));
@@ -42,7 +45,8 @@ public class ProfileServiceImple implements ProfileService {
        profile.setAgeGroup(DetermineAgeGroup(ageApiResponseCompletableFuture.join().getAge()));
        profile.setAge(ageApiResponseCompletableFuture.join().getAge());
         profileRepository.save(profile);
-        return Mapper.mapProfileToProfileResponse(profile);
+        ProfileResponse response= Mapper.mapProfileToProfileResponse(profile);
+        return Mapper.mapProfileResponseToServiceResponse(response,false);
     }
 
 

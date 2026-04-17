@@ -3,17 +3,20 @@ package com.apiintegration.hngstage1profileaggregator.service.serviceImplementat
 import com.apiintegration.hngstage1profileaggregator.data.model.Country;
 import com.apiintegration.hngstage1profileaggregator.data.model.Profile;
 import com.apiintegration.hngstage1profileaggregator.data.repository.ProfileRepository;
+import com.apiintegration.hngstage1profileaggregator.dtos.request.GetProfilesRequest;
 import com.apiintegration.hngstage1profileaggregator.dtos.response.*;
 import com.apiintegration.hngstage1profileaggregator.exception.ProfileExistException;
 import com.apiintegration.hngstage1profileaggregator.service.serviceinterface.AgeApi;
 import com.apiintegration.hngstage1profileaggregator.service.serviceinterface.ProfileService;
 import com.apiintegration.hngstage1profileaggregator.utils.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 public class ProfileServiceImple implements ProfileService {
@@ -29,15 +32,15 @@ public class ProfileServiceImple implements ProfileService {
 
 
     @Override
-    public ServiceResponse<ProfileResponse> createProfile(String name) {
-        Optional<Profile> profileOptional = profileRepository.findByName(name);
+    public ServiceResponse<ProfileResponse> createProfile(GetProfilesRequest getProfilesRequest) {
+        Optional<Profile> profileOptional = profileRepository.findByName(getProfilesRequest.getName());
        if(profileOptional.isPresent()){
            ProfileResponse profileResponse= Mapper.mapProfileToProfileResponse(profileOptional.get());
            return Mapper.mapProfileResponseToServiceResponse(profileResponse,true);
        }
-        CompletableFuture<AgeApiResponse> ageApiResponseCompletableFuture = CompletableFuture.supplyAsync(()->ageApi.getAge(name));
-        CompletableFuture<GenderizeApiResponse> genderizeApiResponseCompletableFuture = CompletableFuture.supplyAsync(()->generalizeApi.getGender(name));
-        CompletableFuture<NationalityApiResponse> nationalizeApiCompletableFuture = CompletableFuture.supplyAsync(()->nationalizeApi.getNationality(name));
+        CompletableFuture<AgeApiResponse> ageApiResponseCompletableFuture = CompletableFuture.supplyAsync(()->ageApi.getAge(getProfilesRequest.getName()));
+        CompletableFuture<GenderizeApiResponse> genderizeApiResponseCompletableFuture = CompletableFuture.supplyAsync(()->generalizeApi.getGender(getProfilesRequest.getName()));
+        CompletableFuture<NationalityApiResponse> nationalizeApiCompletableFuture = CompletableFuture.supplyAsync(()->nationalizeApi.getNationality(getProfilesRequest.getName()));
         CompletableFuture.allOf(ageApiResponseCompletableFuture, genderizeApiResponseCompletableFuture, nationalizeApiCompletableFuture).join();
        Profile profile= Mapper.mapApiResponsesToProfile(ageApiResponseCompletableFuture,genderizeApiResponseCompletableFuture,nationalizeApiCompletableFuture);
        profile.setCountryId(determineCountry(nationalizeApiCompletableFuture.join().getCountry()).getCountryId());
@@ -49,6 +52,50 @@ public class ProfileServiceImple implements ProfileService {
         return Mapper.mapProfileResponseToServiceResponse(response,false);
     }
 
+    @Override
+    public ProfileResponse getProfileById(String id) {
+         Optional<Profile> profileOptional = profileRepository.findById(id);
+         if(profileOptional.isPresent()){
+             return Mapper.mapProfileToProfileResponse(profileOptional.get());
+         }
+         throw new ProfileExistException("profile does not exist");
+    }
+
+    @Override
+    public List<Summary> getProfiles(String gender, String ageGroup, String countryId) {
+        Specification<Profile> spec = Specification.where((root, query, criteriaBuilder) -> null);
+
+        if (gender != null) {
+            spec = spec.and((root, query, cb) ->
+                cb.equal(cb.lower(root.get("gender")), gender.toLowerCase()));
+        }
+        if (countryId != null) {
+            spec = spec.and((root, query, cb) ->
+                cb.equal(cb.lower(root.get("countryId")), countryId.toLowerCase()));
+        }
+        if (ageGroup != null) {
+            spec = spec.and((root, query, cb) ->
+                cb.equal(cb.lower(root.get("ageGroup")), ageGroup.toLowerCase()));
+        }
+        List<Summary> profiles= profileRepository.findAll(spec)
+                .stream()
+                .map(Mapper::mapProfileToSummary)
+                .collect(Collectors.toList());
+        for (int i = 0; i < profiles.size(); i++) {
+            profiles.get(i).setId("id-" + (i + 1));
+        }
+        return profiles;
+    }
+
+    @Override
+    public void deleteProfile(String id) {
+            Optional<Profile> profileOptional = profileRepository.findById(id);
+            if(profileOptional.isPresent()){
+                profileRepository.delete(profileOptional.get());
+            } else {
+                throw new ProfileExistException("profile does not exist");
+            }
+    }
 
     private String DetermineAgeGroup(int age) {
         String ageGroup = "";

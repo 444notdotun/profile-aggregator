@@ -34,4 +34,14 @@ public class Mapper {
     public static ServiceResponse<ProfileResponse> mapProfileResponseToServiceResponse(ProfileResponse profileResponse, boolean success) {
         return new ServiceResponse<>(profileResponse,success);
     }
+
+    public static Summary mapProfileToSummary(Profile profile) {
+        Summary summary = new Summary();
+        summary.setName(profile.getName());
+        summary.setGender(profile.getGender());
+        summary.setAge(profile.getAge());
+        summary.setAgeGroup(profile.getAgeGroup());
+        summary.setCountryId(profile.getCountryId());
+       return summary;
+    }
 }

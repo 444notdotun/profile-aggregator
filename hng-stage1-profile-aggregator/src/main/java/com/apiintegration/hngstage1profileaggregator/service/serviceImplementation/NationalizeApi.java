@@ -50,7 +50,7 @@ public class NationalizeApi implements NationalityApi {
         if(response.statusCode() == 200) {
             NationalityApiResponse nationalityApiResponse= objectMapper.readValue(response.body(), NationalityApiResponse.class);
             if (nationalityApiResponse.getCountry()==null|| nationalityApiResponse.getCountry().isEmpty()){
-                throw new GenderNullException("country data is null");
+                throw new GenderNullException("Nationalize returned an invalid response");
             }
             return nationalityApiResponse;
         }else {

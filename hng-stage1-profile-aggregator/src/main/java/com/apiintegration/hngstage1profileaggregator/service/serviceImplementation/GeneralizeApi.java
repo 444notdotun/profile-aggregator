@@ -47,7 +47,7 @@ public class GeneralizeApi implements GenderApi {
         if(response.statusCode() == 200) {
             GenderizeApiResponse genderizeApiResponse = objectMapper.readValue(response.body(), GenderizeApiResponse.class);
             if (genderizeApiResponse.getGender()==null||genderizeApiResponse.getCount()==0){
-                throw new GenderNullException("gender is null or count is 0 ");
+                throw new GenderNullException("Genderize returned an invalid response ");
             }
             return genderizeApiResponse;
         }else {

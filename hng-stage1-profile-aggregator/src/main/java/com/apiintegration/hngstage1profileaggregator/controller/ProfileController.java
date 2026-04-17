@@ -20,6 +20,10 @@ import java.util.List;
 public class ProfileController {
     @Autowired
     private ProfileService profileService;
+    @GetMapping({"/","","/api"})
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("OK");
+    }
 
     @PostMapping("/api/profiles")
     public ResponseEntity<ApiResponse<ProfileResponse>> getProfile(@Valid @RequestBody GetProfilesRequest getProfilesRequest) {
@@ -37,13 +41,13 @@ public class ProfileController {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(profileResponse));
     }
     @GetMapping("/api/profiles")
-    public ResponseEntity<SpecificationApiResponse> getFilteredProfiles(@RequestParam(required = false)
-                                                                                         @Pattern(regexp = "^(male|female)$", message="gender can only be male or female")
+    public ResponseEntity<SpecificationApiResponse> getFilteredProfiles(@RequestParam( required = false)
+                                                                                        @Pattern(regexp = "(?i)(male|female)$", message="gender can only be male or female")
                                                                                          String gender,
-                                                                                     @RequestParam(required = false)
+                                                                                     @RequestParam(name = "age_group", required = false)
                                                                                      @Pattern(regexp = "^(child|teenager|adult|senior)$", message="ageGroup can only be child, teenager, adult, senior")
                                                                                      String ageGroup,
-                                                                                     @RequestParam(required = false)
+                                                                                     @RequestParam(name = "country_id", required = false)
                                                                                          String countryId) {
         List<Summary> profiles = profileService.getProfiles(gender,ageGroup,countryId);
         return ResponseEntity.status(HttpStatus.OK).body(new SpecificationApiResponse(profiles.size(),profiles));

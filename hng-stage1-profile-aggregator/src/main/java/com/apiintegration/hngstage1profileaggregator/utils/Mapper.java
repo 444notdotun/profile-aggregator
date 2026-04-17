@@ -42,6 +42,7 @@ public class Mapper {
         summary.setAge(profile.getAge());
         summary.setAgeGroup(profile.getAgeGroup());
         summary.setCountryId(profile.getCountryId());
+        summary.setId(profile.getId());
        return summary;
     }
 }

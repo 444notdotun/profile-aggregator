@@ -77,14 +77,10 @@ public class ProfileServiceImple implements ProfileService {
             spec = spec.and((root, query, cb) ->
                 cb.equal(cb.lower(root.get("ageGroup")), ageGroup.toLowerCase()));
         }
-        List<Summary> profiles= profileRepository.findAll(spec)
+        return profileRepository.findAll(spec)
                 .stream()
                 .map(Mapper::mapProfileToSummary)
                 .collect(Collectors.toList());
-        for (int i = 0; i < profiles.size(); i++) {
-            profiles.get(i).setId("id-" + (i + 1));
-        }
-        return profiles;
     }
 
     @Override
